@@ -21,7 +21,7 @@ class Transformer(nn.Module):
         dropout,
     ):
         super(Transformer, self)._init__()
-
+        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model)
         self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model)
         self.positional_encoding = encoding.PositionalEncoding(d_model, max_seq_length)
 
@@ -42,13 +42,21 @@ class Transformer(nn.Module):
         nopeak_mask = (
             1 - torch.triu(torch.ones(1, seq_length, seq_length), diagonal=1)
         ).bool()
+        tgt_mask = tgt_mask & nopeak_mask
         return src_mask, tgt_mask
 
+    def forward(self, src, tgt):
+        src_mask, tgt_mask = self.generate_mask(src, tgt)
+        src_embedded = self.dropout(
+            self.positional_encoding(self.encoder_embedding(src))
+        )
+        tgt_embedded = self.dropout(
+            self.positional_encoding(self.decoder_embedding(tgt))
+        )
 
-#    def forward(self, src, tgt):
-#        src_mask, tgt_mask = self.generate_mask(src, tgt)
-#        tgt_embedded = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
-#
-#        dec_output = tgt_embedded
-#        for dec_layer in self.decoder_layers:
-#            dec_output = dec_layer(dec_output, `k`)
+        dec_output = tgt_embedded
+        for dec_layer in self.decoder_layers:
+            dec_output = dec_layer(dec_output, src_embedded, src_mask, tgt_mask)
+
+        output = self.fc(dec_output)
+        return output

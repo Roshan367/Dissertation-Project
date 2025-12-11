@@ -23,7 +23,7 @@ class Decoder(nn.Module):
 
     def forward(self, x, emb_output, src_mask, tgt_mask):
         attention_output = self.self_attention(x, x, x, tgt_mask)
-        x = self.norm1(x + self.drouput(attention_output))
+        x = self.norm1(x + self.dropout(attention_output))
         attention_output = self.cross_attention(x, emb_output, emb_output, src_mask)
         x = self.norm2(x + self.dropout(attention_output))
         ff_output = self.feedforward(x)
