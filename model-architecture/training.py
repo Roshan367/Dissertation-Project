@@ -29,6 +29,9 @@ transformer = transformer.Transformer(
 src_data = torch.randint(1, src_vocab_size, (64, max_seq_length))
 tgt_data = torch.randint(1, tgt_vocab_size, (64, max_seq_length))
 
+print(src_data.shape)
+print(tgt_data.shape)
+
 criterion = nn.CrossEntropyLoss(ignore_index=0)
 optimiser = optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)
 
