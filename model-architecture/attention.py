@@ -6,9 +6,9 @@ import math
 import copy
 
 
-class MulitHeadAttention(nn.Module):
+class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
-        super(MulitHeadAttention, self).__init__()
+        super(MultiHeadAttention, self).__init__()
         assert d_model % num_heads == 0, "d_model must be divisible by num_heads"
 
         self.d_model = d_model

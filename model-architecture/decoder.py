@@ -19,7 +19,7 @@ class Decoder(nn.Module):
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.norm3 = nn.LayerNorm(d_model)
-        self.dropout = nn.dropout(dropout)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, emb_output, src_mask, tgt_mask):
         attention_output = self.self_attention(x, x, x, tgt_mask)
