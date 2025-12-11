@@ -20,7 +20,7 @@ class Transformer(nn.Module):
         max_seq_length,
         dropout,
     ):
-        super(Transformer, self)._init__()
+        super(Transformer, self).__init__()
         self.encoder_embedding = nn.Embedding(src_vocab_size, d_model)
         self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model)
         self.positional_encoding = encoding.PositionalEncoding(d_model, max_seq_length)
@@ -33,7 +33,7 @@ class Transformer(nn.Module):
         )
 
         self.fc = nn.Linear(d_model, tgt_vocab_size)
-        self.dropout == nn.dropout(dropout)
+        self.dropout = nn.Dropout(dropout)
 
     def generate_mask(self, src, tgt):
         src_mask = (src != 0).unsqueeze(1).unsqueeze(2)
@@ -55,7 +55,7 @@ class Transformer(nn.Module):
         )
 
         dec_output = tgt_embedded
-        for dec_layer in self.decoder_layers:
+        for dec_layer in self.decode_layers:
             dec_output = dec_layer(dec_output, src_embedded, src_mask, tgt_mask)
 
         output = self.fc(dec_output)
