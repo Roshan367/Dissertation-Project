@@ -19,6 +19,7 @@ tokeniser.pad_token = tokeniser.eos_token
 
 
 loader, tokeniser = get_wikitext_dataloader(
+    # Only training on 1000 values
     split="train[:1000]",
     tokeniser_name="gpt2",
     batch_size=2,
@@ -56,7 +57,13 @@ for epoch in range(num_epochs):
             output.reshape(-1, vocab_size),
             tgt[:, 1:].reshape(-1),
         )
+
+        if torch.isnan(loss):
+            continue
+
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
         optimiser.step()
     print(f"Epoch: {epoch + 1}, Loss: {loss.item()}")
 
