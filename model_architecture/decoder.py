@@ -4,10 +4,10 @@ import torch.optim as optim
 import torch.utils.data as data
 import math
 import copy
-import attention
-import encoding
-import feedforward
-import decoder
+from . import attention
+from . import encoding
+from . import feedforward
+from . import decoder
 
 
 class Decoder(nn.Module):
