@@ -4,8 +4,8 @@ import torch.optim as optim
 import torch.utils.data as data
 import math
 import copy
-import decoder
-import encoding
+from . import decoder
+from . import encoding
 
 
 class Transformer(nn.Module):
