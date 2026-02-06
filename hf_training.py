@@ -45,3 +45,26 @@ for epoch in range(num_epochs):
 
         optimiser.step()
     print(f"Epoch: {epoch + 1}, Loss: {loss.item()}")
+model.eval()
+with torch.no_grad():
+    prompt = "The history of artificial intelligence"
+    input_ids = tokeniser(prompt, return_tensors="pt")["input_ids"]
+    generated = input_ids[:, :1]
+
+    p = 0.9
+    for _ in range(50):  # generate 50 tokens
+        output = model(generated, generated)
+        probs = torch.softmax(output[:, -1, :], dim=-1)
+
+        sorted_probs, sorted_indices = torch.sort(probs, descending=True)
+        cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+        sorted_probs[cumulative_probs > p] = 0
+        sorted_probs = sorted_probs / sorted_probs.sum(dim=-1, keepdim=True)
+
+        sampled_index = torch.multinomial(sorted_probs, num_samples=1)
+        next_token = sorted_indices.gather(-1, sampled_index)
+
+        generated = torch.cat((generated, next_token), dim=1)
+
+generated_text = tokeniser.decode(generated[0], skip_special_tokens=True)
+print("Generated text:", generated_text)

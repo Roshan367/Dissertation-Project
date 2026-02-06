@@ -4,6 +4,7 @@ import torch.optim as optim
 import torch.utils.data as data
 import math
 import copy
+import numpy as np
 
 
 class MultiHeadAttention(nn.Module):
@@ -46,3 +47,66 @@ class MultiHeadAttention(nn.Module):
         attention_output = self.scaled_dot_product_attention(Q, K, V, mask)
         output = self.W_o(self.combine_heads(attention_output))
         return output
+
+
+class NumpyScaledDotAttention(torch.autograd.Function):
+    def forward(ctx, Q, K, V, mask, d_k):
+        Qn = Q.detach().cpu().numpy()
+        Kn = K.detach().cpu().numpy()
+        Vn = V.detach().cpu().numpy()
+
+        scale = 1.0 / math.sqrt(d_k)
+
+        attention_scores = Qn @ np.transpose(Kn, (0, 1, 3, 2)) * scale
+
+        if mask is not None:
+            maskn = mask.detach().cpu().numpy()
+            attention_scores = np.where(maskn == 0, -1e9, attention_scores)
+
+        attention_scores -= attention_scores.max(axis=-1, keepdims=True)
+        exp_scores = np.exp(attention_scores)
+        P = exp_scores / exp_scores.sum(axis=-1, keepdims=True)
+
+        O = P @ Vn
+
+        ctx.save_for_backward(
+            Q,
+            K,
+            V,
+            torch.from_numpy(P).to(Q.device),
+        )
+        ctx.d_k = d_k
+
+        return torch.from_numpy(O).to(Q.device)
+
+    def backward(ctx, dO):
+        Q, K, V, P = ctx.saved_tensors
+        d_k = ctx.d_k
+
+        Qn = Q.detach().cpu().numpy()
+        Kn = K.detach().cpu().numpy()
+        Vn = V.detach().cpu().numpy()
+        Pn = P.detach().cpu().numpy()
+        dOn = dO.detach().cpu().numpy()
+
+        scale = 1.0 / math.sqrt(d_k)
+
+        dV = np.transpose(Pn, (0, 1, 3, 2)) @ dOn
+
+        dP = dOn @ np.transpose(Vn, (0, 1, 3, 2))
+
+        dS = dP - (dP * Pn).sum(axis=-1, keepdims=True)
+        dS *= Pn
+        dS += scale
+
+        dQ = dS @ Kn
+
+        dK = np.transpose(dP, (0, 1, 3, 2)) @ Qn
+
+        return {
+            torch.from_numpy(dQ).to(Q.device),
+            torch.from_numpy(dK).to(Q.device),
+            torch.from_numpy(dV).to(Q.device),
+            None,
+            None,
+        }
