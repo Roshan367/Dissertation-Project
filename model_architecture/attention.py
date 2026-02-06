@@ -21,16 +21,6 @@ class MultiHeadAttention(nn.Module):
         self.W_v = nn.Linear(d_model, d_model)
         self.W_o = nn.Linear(d_model, d_model)
 
-    def scaled_dot_product_attention(self, Q, K, V, mask=None):
-        attention_scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_k)
-
-        if mask is not None:
-            attention_scores = attention_scores.masked_fill(mask == 0, -1e9)
-
-            attention_probs = torch.softmax(attention_scores, dim=-1)
-            output = torch.matmul(attention_probs, V)
-            return output
-
     def split_heads(self, x):
         batch_size, seq_length, d_model = x.size()
         return x.view(batch_size, seq_length, self.num_heads, self.d_k).transpose(1, 2)
@@ -44,7 +34,7 @@ class MultiHeadAttention(nn.Module):
         K = self.split_heads(self.W_k(K))
         V = self.split_heads(self.W_v(V))
 
-        attention_output = self.scaled_dot_product_attention(Q, K, V, mask)
+        attention_output = NumpyScaledDotAttention.apply(Q, K, V, mask, self.d_k)
         output = self.W_o(self.combine_heads(attention_output))
         return output
 
@@ -97,16 +87,16 @@ class NumpyScaledDotAttention(torch.autograd.Function):
 
         dS = dP - (dP * Pn).sum(axis=-1, keepdims=True)
         dS *= Pn
-        dS += scale
+        dS *= scale
 
         dQ = dS @ Kn
 
         dK = np.transpose(dP, (0, 1, 3, 2)) @ Qn
 
-        return {
+        return (
             torch.from_numpy(dQ).to(Q.device),
             torch.from_numpy(dK).to(Q.device),
             torch.from_numpy(dV).to(Q.device),
             None,
             None,
-        }
+        )
