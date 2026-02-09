@@ -4,6 +4,7 @@ import torch.optim as optim
 import torch.utils.data as data
 import math
 import copy
+from . import normalisation
 from . import attention
 from . import encoding
 from . import feedforward
@@ -16,9 +17,9 @@ class Decoder(nn.Module):
         self.self_attention = attention.MultiHeadAttention(d_model, num_heads)
         self.cross_attention = attention.MultiHeadAttention(d_model, num_heads)
         self.feedforward = feedforward.FeedForward(d_model, d_ff)
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
-        self.norm3 = nn.LayerNorm(d_model)
+        self.norm1 = normalisation.HybridLayerNorm(d_model)
+        self.norm2 = normalisation.HybridLayerNorm(d_model)
+        self.norm3 = normalisation.HybridLayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, emb_output, src_mask, tgt_mask):
