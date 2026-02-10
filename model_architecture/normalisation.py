@@ -19,18 +19,15 @@ class HybridLayerNorm(nn.Module):
 
 
 class NumpyNormalisation(torch.autograd.Function):
+    @staticmethod
     def forward(ctx, x, gamma, beta, epsilon):
-        xn = x.detach().cpu().numpy()
-        gamman = gamma.detach().cpu().numpy()
-        betan = beta.detach().cpu().numpy()
+        mean = x.mean(dim=1, keepdim=True)
+        var = x.var(dim=1, keepdim=True, unbiased=False)
 
-        mean = xn.mean(axis=1, keepdims=True)
-        var = xn.var(axis=1, keepdims=True)
+        std = torch.sqrt(var + epsilon)
+        xhat = (x - mean) / std
 
-        std = np.sqrt(var + epsilon)
-        xhat = (xn - mean) / std
-
-        y = gamman * xhat + betan
+        y = gamma * xhat + beta
 
         ctx.save_for_backward(
             x,
@@ -41,35 +38,31 @@ class NumpyNormalisation(torch.autograd.Function):
         ctx.std = std
         ctx.epsilon = epsilon
 
-        return torch.from_numpy(y).to(x.device)
+        return y
 
+    @staticmethod
     def backward(ctx, dY):
         x, gamma, beta = ctx.saved_tensors
         xhat = ctx.xhat
         std = ctx.std
         epsilon = ctx.epsilon
 
-        xn = x.detach().cpu().numpy()
-        gamman = gamma.detach().cpu().numpy()
-        betan = beta.detach().cpu().numpy()
-        dYn = dY.detach().cpu().numpy()
+        B, T, D = dY.shape
 
-        B, T, D = dYn.shape
+        dbeta = torch.sum(dY, dim=(0, 1))
 
-        dbeta = np.sum(dYn, axis=(0, 1))
+        dgamma = torch.sum(dY * xhat, dim=(0, 1))
 
-        dgamma = np.sum(dYn * xhat, axis=(0, 1))
-
-        dxhat = dYn * gamman
-        dstd = np.sum(dxhat * (xhat * -1) / (std), axis=-1, keepdims=True)
-        dvar = np.sum(dxhat * (xhat * -0.5) / (std**2), axis=-1, keepdims=True)
+        dxhat = dY * gamma
+        dstd = torch.sum(dxhat * (xhat * -1) / (std), dim=-1, keepdim=True)
+        dvar = torch.sum(dxhat * (xhat * -0.5) / (std**2), dim=-1, keepdim=True)
         ddiff = dvar * 2 * xhat * std / (D) + dxhat / (std)
-        dmean = np.sum(dxhat * -1 / (std), axis=-1, keepdims=True)
+        dmean = torch.sum(dxhat * -1 / (std), dim=-1, keepdim=True)
         dx = ddiff + dmean / D
 
         return (
-            torch.from_numpy(dx).to(x.device),
-            torch.from_numpy(dgamma).to(x.device),
-            torch.from_numpy(dbeta).to(x.device),
+            dx,
+            dgamma,
+            dbeta,
             None,
         )

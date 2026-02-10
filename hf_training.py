@@ -53,18 +53,29 @@ with torch.no_grad():
 
     p = 0.9
     for _ in range(50):  # generate 50 tokens
-        output = model(generated, generated)
-        probs = torch.softmax(output[:, -1, :], dim=-1)
+        output = model(input_ids=generated)
+        logits = output.logits
+        probs = torch.softmax(logits[:, -1, :], dim=-1)
 
         sorted_probs, sorted_indices = torch.sort(probs, descending=True)
         cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-        sorted_probs[cumulative_probs > p] = 0
-        sorted_probs = sorted_probs / sorted_probs.sum(dim=-1, keepdim=True)
+
+        # Always keep at least the first token
+        mask = cumulative_probs <= 0.9
+        mask[:, 0] = True  # first token always included
+
+        sorted_probs = sorted_probs * mask
+        sorted_probs_sum = sorted_probs.sum(dim=-1, keepdim=True)
+        sorted_probs_sum = torch.clamp(
+            sorted_probs_sum, min=1e-8
+        )  # prevent division by zero
+        sorted_probs = sorted_probs / sorted_probs_sum
 
         sampled_index = torch.multinomial(sorted_probs, num_samples=1)
         next_token = sorted_indices.gather(-1, sampled_index)
 
         generated = torch.cat((generated, next_token), dim=1)
+
 
 generated_text = tokeniser.decode(generated[0], skip_special_tokens=True)
 print("Generated text:", generated_text)

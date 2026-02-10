@@ -4,7 +4,6 @@ import torch.optim as optim
 import torch.utils.data as data
 import math
 import copy
-import numpy as np
 
 
 class MultiHeadAttention(nn.Module):
@@ -34,69 +33,66 @@ class MultiHeadAttention(nn.Module):
         K = self.split_heads(self.W_k(K))
         V = self.split_heads(self.W_v(V))
 
-        attention_output = NumpyScaledDotAttention.apply(Q, K, V, mask, self.d_k)
+        attention_output = CustomScaledDotAttention.apply(Q, K, V, mask, self.d_k)
         output = self.W_o(self.combine_heads(attention_output))
         return output
 
 
-class NumpyScaledDotAttention(torch.autograd.Function):
+class CustomScaledDotAttention(torch.autograd.Function):
+    @staticmethod
     def forward(ctx, Q, K, V, mask, d_k):
-        Qn = Q.detach().cpu().numpy()
-        Kn = K.detach().cpu().numpy()
-        Vn = V.detach().cpu().numpy()
-
         scale = 1.0 / math.sqrt(d_k)
 
-        attention_scores = Qn @ np.transpose(Kn, (0, 1, 3, 2)) * scale
+        attention_scores = torch.matmul(Q, K.transpose(-2, -1)) * scale
 
         if mask is not None:
-            maskn = mask.detach().cpu().numpy()
-            attention_scores = np.where(maskn == 0, -1e9, attention_scores)
+            attention_scores = attention_scores.masked_fill(mask == 0, float("-inf"))
 
-        attention_scores -= attention_scores.max(axis=-1, keepdims=True)
-        exp_scores = np.exp(attention_scores)
-        P = exp_scores / exp_scores.sum(axis=-1, keepdims=True)
+        attention_scores = (
+            attention_scores - attention_scores.max(dim=-1, keepdim=True).values
+        )
+        exp_scores = torch.exp(attention_scores)
+        P = exp_scores / exp_scores.sum(dim=-1, keepdim=True)
 
-        O = P @ Vn
+        O = torch.matmul(P, V)
 
         ctx.save_for_backward(
             Q,
             K,
             V,
-            torch.from_numpy(P).to(Q.device),
+            P,
+            mask,
         )
         ctx.d_k = d_k
 
-        return torch.from_numpy(O).to(Q.device)
+        return O
 
+    @staticmethod
     def backward(ctx, dO):
-        Q, K, V, P = ctx.saved_tensors
+        Q, K, V, P, mask = ctx.saved_tensors
         d_k = ctx.d_k
-
-        Qn = Q.detach().cpu().numpy()
-        Kn = K.detach().cpu().numpy()
-        Vn = V.detach().cpu().numpy()
-        Pn = P.detach().cpu().numpy()
-        dOn = dO.detach().cpu().numpy()
 
         scale = 1.0 / math.sqrt(d_k)
 
-        dV = np.transpose(Pn, (0, 1, 3, 2)) @ dOn
+        dV = torch.matmul(P.transpose(-2, -1), dO)
 
-        dP = dOn @ np.transpose(Vn, (0, 1, 3, 2))
+        dP = torch.matmul(dO, V.transpose(-2, -1))
 
-        dS = dP - (dP * Pn).sum(axis=-1, keepdims=True)
-        dS *= Pn
+        dS = dP - (dP * P).sum(dim=-1, keepdim=True)
+        dS *= P
         dS *= scale
 
-        dQ = dS @ Kn
+        if mask is not None:
+            dS = dS.masked_fill(mask == 0, 0.0)
 
-        dK = np.transpose(dP, (0, 1, 3, 2)) @ Qn
+        dQ = torch.matmul(dS, K)
+
+        dK = torch.matmul(dS.transpose(-2, -1), Q)
 
         return (
-            torch.from_numpy(dQ).to(Q.device),
-            torch.from_numpy(dK).to(Q.device),
-            torch.from_numpy(dV).to(Q.device),
+            dQ,
+            dK,
+            dV,
             None,
             None,
         )

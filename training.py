@@ -69,7 +69,7 @@ for epoch in range(num_epochs):
 
 model.eval()
 with torch.no_grad():
-    prompt = "The history of artificial intelligence"
+    prompt = "Aircrafts are "
     input_ids = tokeniser(prompt, return_tensors="pt")["input_ids"]
     generated = input_ids[:, :1]
 
@@ -80,8 +80,13 @@ with torch.no_grad():
 
         sorted_probs, sorted_indices = torch.sort(probs, descending=True)
         cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-        sorted_probs[cumulative_probs > p] = 0
-        sorted_probs = sorted_probs / sorted_probs.sum(dim=-1, keepdim=True)
+
+        mask = cumulative_probs <= p
+        mask[:, 0] = True
+
+        sorted_probs = sorted_probs * mask
+        sorted_probs_sum = torch.clamp(sorted_probs.sum(dim=-1, keepdim=True), min=1e-8)
+        sorted_probs = sorted_probs / sorted_probs_sum
 
         sampled_index = torch.multinomial(sorted_probs, num_samples=1)
         next_token = sorted_indices.gather(-1, sampled_index)
