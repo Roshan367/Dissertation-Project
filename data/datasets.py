@@ -3,6 +3,11 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer
 
+"""
+Class used to load datasets properly depending on the dataset, split,
+and tokeniser
+"""
+
 
 class WikiTextDataset(Dataset):
     def __init__(self, texts, tokeniser, max_length=128):

@@ -10,6 +10,13 @@ from . import encoding
 from . import feedforward
 from . import decoder
 
+"""
+Decoder class for the transformer
+
+Uses the attention, feedforward, and normalisation layers to be used on the inputs
+through the residual stream
+"""
+
 
 class Decoder(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout):

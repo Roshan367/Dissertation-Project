@@ -6,6 +6,12 @@ import math
 import copy
 import numpy as np
 
+"""
+Normalisation class for the decoder
+
+Performs normalisation on the inputs with learnable parameters
+"""
+
 
 class HybridLayerNorm(nn.Module):
     def __init__(self, d_model, epsilon=1e-5):
@@ -16,6 +22,11 @@ class HybridLayerNorm(nn.Module):
 
     def forward(self, x):
         return NumpyNormalisation.apply(x, self.weights, self.bias, self.epsilon)
+
+
+"""
+Custom forward and backpropagation for normalisation class
+"""
 
 
 class NumpyNormalisation(torch.autograd.Function):
