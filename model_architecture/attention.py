@@ -5,6 +5,12 @@ import torch.utils.data as data
 import math
 import copy
 
+"""
+Attention class used in the decoder
+
+Performs multi-head self attention on the inputs
+"""
+
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
@@ -36,6 +42,11 @@ class MultiHeadAttention(nn.Module):
         attention_output = CustomScaledDotAttention.apply(Q, K, V, mask, self.d_k)
         output = self.W_o(self.combine_heads(attention_output))
         return output
+
+
+"""
+Custom attention class to perform custom forward and backpropagation
+"""
 
 
 class CustomScaledDotAttention(torch.autograd.Function):

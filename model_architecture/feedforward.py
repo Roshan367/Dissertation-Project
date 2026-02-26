@@ -6,6 +6,12 @@ import math
 import copy
 import numpy as np
 
+"""
+Feedforward class to be used in the decoder
+
+A feedforward neural network for the inputs
+"""
+
 
 class FeedForward(nn.Module):
     def __init__(self, d_model, d_ff):
@@ -17,6 +23,12 @@ class FeedForward(nn.Module):
 
     def forward(self, x):
         return CustomFeedForward.apply(x, self.W1, self.b1, self.W2, self.b2)
+
+
+"""
+Custom forward and backpropagation for the feedforward neural
+network
+"""
 
 
 class CustomFeedForward(torch.autograd.Function):

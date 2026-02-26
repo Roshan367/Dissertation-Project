@@ -7,6 +7,14 @@ import copy
 from . import decoder
 from . import encoding
 
+"""
+Transformer class for the model
+
+Main class for the model as it takes in the model parameters and inputs and outputs
+Uses the embedding and decoder class to get the ouputs and decode them
+This can then be used for sampling in the training
+"""
+
 
 class Transformer(nn.Module):
     def __init__(

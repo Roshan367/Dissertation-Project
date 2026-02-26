@@ -5,6 +5,10 @@ import torch.utils.data as data
 import math
 import copy
 
+"""
+Positional encoding class for the decoder
+"""
+
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_seq_length):
