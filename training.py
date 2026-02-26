@@ -5,7 +5,8 @@ from model_architecture.transformer import Transformer
 from data.datasets import get_wikitext_dataloader
 from transformers import AutoTokenizer
 
-# Tiny settings for fast test
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 d_model = 128
 num_heads = 4
 num_layers = 2
@@ -38,6 +39,7 @@ model = Transformer(
     max_seq_length=max_seq_length,
     dropout=dropout,
 )
+model.to(device)
 
 criterion = nn.CrossEntropyLoss(ignore_index=tokeniser.pad_token_id)
 optimiser = optim.Adam(model.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)
@@ -47,8 +49,8 @@ model.train()
 
 for epoch in range(num_epochs):
     for batch in loader:
-        src = batch["src"]
-        tgt = batch["tgt"]
+        src = batch["src"].to(device)
+        tgt = batch["tgt"].to(device)
 
         optimiser.zero_grad()
         output = model(src, tgt[:, :-1])
@@ -70,7 +72,7 @@ for epoch in range(num_epochs):
 model.eval()
 with torch.no_grad():
     prompt = "Aircrafts are "
-    input_ids = tokeniser(prompt, return_tensors="pt")["input_ids"]
+    input_ids = tokeniser(prompt, return_tensors="pt")["input_ids"].to(device)
     generated = input_ids[:, :1]
 
     p = 0.9
