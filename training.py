@@ -23,9 +23,9 @@ tokeniser.pad_token = tokeniser.eos_token
 
 loader, tokeniser = get_wikitext_dataloader(
     # Only training on 1000 values
-    split="train[:30]",
+    split="train[:5000]",
     tokeniser_name="gpt2",
-    batch_size=1,
+    batch_size=64,
     max_length=max_seq_length,
 )
 
