@@ -25,7 +25,7 @@ loader, tokeniser = get_wikitext_dataloader(
     # Only training on 1000 values
     split="train[:200]",
     tokeniser_name="gpt2",
-    batch_size=64,
+    batch_size=4,
     max_length=max_seq_length,
 )
 
