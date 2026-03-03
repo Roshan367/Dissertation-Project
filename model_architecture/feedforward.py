@@ -21,6 +21,9 @@ class FeedForward(nn.Module):
         self.W2 = nn.Parameter(torch.empty(d_ff, d_model))
         self.b2 = nn.Parameter(torch.zeros(d_model))
 
+        nn.init.kaiming_uniform_(self.W1, nonlinearity="relu")
+        nn.init.kaiming_uniform_(self.W2, nonlinearity="relu")
+
     def forward(self, x):
         return CustomFeedForward.apply(x, self.W1, self.b1, self.W2, self.b2)
 
