@@ -15,7 +15,7 @@ max_seq_length = 256
 dropout = 0.1
 
 num_epochs = 10
-lr = 1e-4
+lr = 3e-4
 
 tokeniser = AutoTokenizer.from_pretrained("gpt2")
 tokeniser.pad_token = tokeniser.eos_token
@@ -46,7 +46,9 @@ model.to(device)
 criterion = nn.CrossEntropyLoss(ignore_index=tokeniser.pad_token_id)
 optimiser = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
 
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimiser, T_max=num_epochs)
+scheduler = torch.optim.lr_scheduler.OneCycleLR(
+    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
+)
 
 scaler = torch.amp.GradScaler("cuda")
 
@@ -80,10 +82,10 @@ for epoch in range(num_epochs):
         scaler.step(optimiser)
         scaler.update()
 
+        scheduler.step()
+
         total_loss += loss.item()
         batches += 1
-
-    scheduler.step()
 
     avg_loss = total_loss / max(1, batches)
 
