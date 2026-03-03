@@ -56,24 +56,18 @@ class CustomScaledDotAttention(torch.autograd.Function):
 
         attention_scores = torch.matmul(Q, K.transpose(-2, -1)) * scale
 
-        if mask is not None:
-            attention_scores = attention_scores.masked_fill(mask == 0, float("-inf"))
+        max_scores = attention_scores.max(dim=-1, keepdim=True).values
+        attention_scores = attention_scores - max_scores
 
-        attention_scores = (
-            attention_scores - attention_scores.max(dim=-1, keepdim=True).values
-        )
+        if mask is not None:
+            attention_scores = attention_scores.masked_fill(~mask.bool(), float("-inf"))
+
         exp_scores = torch.exp(attention_scores)
         P = exp_scores / exp_scores.sum(dim=-1, keepdim=True)
 
         O = torch.matmul(P, V)
 
-        ctx.save_for_backward(
-            Q,
-            K,
-            V,
-            P,
-            mask,
-        )
+        ctx.save_for_backward(Q, K, V, P, mask, attention_scores)
         ctx.d_k = d_k
 
         return O
@@ -89,9 +83,10 @@ class CustomScaledDotAttention(torch.autograd.Function):
 
         dP = torch.matmul(dO, V.transpose(-2, -1))
 
-        dS = dP - (dP * P).sum(dim=-1, keepdim=True)
-        dS *= P
-        dS *= scale
+        dP_sum = (dP * P).sum(dim=-1, keepdim=True)
+        dS = P * (dP - dP_sum)
+
+        dS = dS * scale
 
         if mask is not None:
             dS = dS.masked_fill(mask == 0, 0.0)

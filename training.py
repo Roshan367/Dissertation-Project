@@ -48,7 +48,7 @@ optimiser = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
 
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimiser, T_max=num_epochs)
 
-scaler = torch.cuda.amp.GradScaler()
+scaler = torch.amp.GradScaler("cuda")
 
 model.train()
 
@@ -61,7 +61,7 @@ for epoch in range(num_epochs):
         tgt = batch["tgt"].to(device)
 
         optimiser.zero_grad()
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             output = model(src, tgt[:, :-1])
 
             loss = criterion(
