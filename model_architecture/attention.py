@@ -77,6 +77,12 @@ class CustomScaledDotAttention(torch.autograd.Function):
         Q, K, V, P, mask, attention_scores = ctx.saved_tensors
         d_k = ctx.d_k
 
+        dtype = dO.dtype
+        P = P.to(dtype)
+        Q = Q.to(dtype)
+        K = K.to(dtype)
+        V = V.to(dtype)
+
         scale = 1.0 / math.sqrt(d_k)
 
         dV = torch.matmul(P.transpose(-2, -1), dO)
