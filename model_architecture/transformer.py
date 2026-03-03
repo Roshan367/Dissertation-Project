@@ -1,26 +1,19 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import torch.utils.data as data
 import math
-import copy
 from . import decoder
 from . import encoding
 
 """
-Transformer class for the model
-
-Main class for the model as it takes in the model parameters and inputs and outputs
-Uses the embedding and decoder class to get the ouputs and decode them
-This can then be used for sampling in the training
+Transformer class - Decoder-only architecture for language modelling.
+Takes a single sequence and predicts the next token at each position.
 """
 
 
 class Transformer(nn.Module):
     def __init__(
         self,
-        src_vocab_size,
-        tgt_vocab_size,
+        vocab_size,
         d_model,
         num_heads,
         num_layers,
@@ -29,47 +22,35 @@ class Transformer(nn.Module):
         dropout,
     ):
         super(Transformer, self).__init__()
-        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model)
-        self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model)
+        self.embedding = nn.Embedding(vocab_size, d_model)
         self.positional_encoding = encoding.PositionalEncoding(d_model, max_seq_length)
-
         self.decode_layers = nn.ModuleList(
             [
                 decoder.Decoder(d_model, num_heads, d_ff, dropout)
                 for _ in range(num_layers)
             ]
         )
-
-        self.fc = nn.Linear(d_model, tgt_vocab_size)
+        self.fc = nn.Linear(d_model, vocab_size)
         self.dropout = nn.Dropout(dropout)
 
-    def generate_mask(self, src, tgt):
-        device = src.device
-
-        src_mask = (src != 0).unsqueeze(1).unsqueeze(2)
-        tgt_mask = (tgt != 0).unsqueeze(1).unsqueeze(3)
-        seq_length = tgt.size(1)
-        nopeak_mask = (
+    def generate_mask(self, x):
+        device = x.device
+        seq_length = x.size(1)
+        # Padding mask: (B, 1, 1, T)
+        pad_mask = (x != 0).unsqueeze(1).unsqueeze(2)
+        # Causal mask: (1, T, T) — prevents attending to future tokens
+        causal_mask = (
             1
             - torch.triu(
                 torch.ones(1, seq_length, seq_length, device=device), diagonal=1
             )
         ).bool()
-        tgt_mask = tgt_mask & nopeak_mask
-        return src_mask, tgt_mask
+        # Combine: (B, 1, T, T)
+        return pad_mask & causal_mask
 
-    def forward(self, src, tgt):
-        src_mask, tgt_mask = self.generate_mask(src, tgt)
-        src_embedded = self.dropout(
-            self.positional_encoding(self.encoder_embedding(src))
-        )
-        tgt_embedded = self.dropout(
-            self.positional_encoding(self.decoder_embedding(tgt))
-        )
-
-        dec_output = tgt_embedded
-        for dec_layer in self.decode_layers:
-            dec_output = dec_layer(dec_output, src_embedded, src_mask, tgt_mask)
-
-        output = self.fc(dec_output)
-        return output
+    def forward(self, x):
+        mask = self.generate_mask(x)
+        x = self.dropout(self.positional_encoding(self.embedding(x)))
+        for layer in self.decode_layers:
+            x = layer(x, mask)
+        return self.fc(x)
