@@ -16,10 +16,10 @@ A feedforward neural network for the inputs
 class FeedForward(nn.Module):
     def __init__(self, d_model, d_ff):
         super(FeedForward, self).__init__()
-        self.W1 = nn.Parameter(torch.randn(d_model, d_ff))
-        self.b1 = nn.Parameter(torch.randn(d_ff))
-        self.W2 = nn.Parameter(torch.randn(d_ff, d_model))
-        self.b2 = nn.Parameter(torch.randn(d_model))
+        self.W1 = nn.Parameter(torch.empty(d_model, d_ff))
+        self.b1 = nn.Parameter(torch.zeros(d_ff))
+        self.W2 = nn.Parameter(torch.empty(d_ff, d_model))
+        self.b2 = nn.Parameter(torch.zeros(d_model))
 
     def forward(self, x):
         return CustomFeedForward.apply(x, self.W1, self.b1, self.W2, self.b2)
