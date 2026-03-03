@@ -7,9 +7,9 @@ from transformers import AutoTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-d_model = 256
+d_model = 512
 num_heads = 16
-num_layers = 6
+num_layers = 8
 d_ff = 2048
 max_seq_length = 512
 dropout = 0.1
@@ -23,9 +23,9 @@ tokeniser.pad_token = tokeniser.eos_token
 
 loader, tokeniser = get_wikitext_dataloader(
     # Only training on 1000 values
-    split="train[:200]",
+    split="train[:30]",
     tokeniser_name="gpt2",
-    batch_size=4,
+    batch_size=1,
     max_length=max_seq_length,
 )
 
@@ -46,9 +46,9 @@ model.to(device)
 criterion = nn.CrossEntropyLoss(ignore_index=tokeniser.pad_token_id)
 optimiser = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
 
-scheduler = torch.optim.lr_scheduler.OneCycleLR(
-    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
-)
+# scheduler = torch.optim.lr_scheduler.OneCycleLR(
+#    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
+# )
 
 scaler = torch.amp.GradScaler("cuda")
 
@@ -82,7 +82,7 @@ for epoch in range(num_epochs):
         scaler.step(optimiser)
         scaler.update()
 
-        scheduler.step()
+        # scheduler.step()
 
         total_loss += loss.item()
         batches += 1
