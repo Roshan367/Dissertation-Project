@@ -74,7 +74,7 @@ class CustomScaledDotAttention(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, dO):
-        Q, K, V, P, mask = ctx.saved_tensors
+        Q, K, V, P, mask, attention_scores = ctx.saved_tensors
         d_k = ctx.d_k
 
         scale = 1.0 / math.sqrt(d_k)
