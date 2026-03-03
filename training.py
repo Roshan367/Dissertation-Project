@@ -14,7 +14,7 @@ d_ff = 2048
 max_seq_length = 512
 dropout = 0.1
 
-num_epochs = 50
+num_epochs = 10
 lr = 3e-4
 
 tokeniser = AutoTokenizer.from_pretrained("gpt2")
@@ -23,7 +23,7 @@ tokeniser.pad_token = tokeniser.eos_token
 
 loader, tokeniser = get_wikitext_dataloader(
     # Only training on 1000 values
-    split="train[:5000]",
+    split="train",
     tokeniser_name="gpt2",
     batch_size=64,
     max_length=max_seq_length,
@@ -46,9 +46,9 @@ model.to(device)
 criterion = nn.CrossEntropyLoss(ignore_index=tokeniser.pad_token_id)
 optimiser = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
 
-# scheduler = torch.optim.lr_scheduler.OneCycleLR(
-#    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
-# )
+scheduler = torch.optim.lr_scheduler.OneCycleLR(
+    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
+)
 
 scaler = torch.amp.GradScaler("cuda")
 
@@ -71,7 +71,7 @@ for epoch in range(num_epochs):
                 tgt[:, 1:].reshape(-1),
             )
 
-        if torch.isnan(loss):
+        if not torch.isfinite(loss):
             continue
 
         scaler.scale(loss).backward()
@@ -82,7 +82,7 @@ for epoch in range(num_epochs):
         scaler.step(optimiser)
         scaler.update()
 
-        # scheduler.step()
+        scheduler.step()
 
         total_loss += loss.item()
         batches += 1
