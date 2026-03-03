@@ -30,7 +30,6 @@ class WikiTextDataset(Dataset):
         ids = enc["input_ids"].squeeze(0)
 
         return {
-            "src": ids,
             "tgt": ids.clone(),
         }
 
@@ -38,8 +37,8 @@ class WikiTextDataset(Dataset):
 def get_wikitext_dataloader(
     split="train", tokeniser_name="gpt2", batch_size=8, max_length=64
 ):
-    dataset = load_dataset("wikitext", "wikitext-2-raw-v1", split=split)
-    texts = dataset["text"]
+    dataset = load_dataset("wikitext", "wikitext-103-raw-v1", split=split)
+    texts = [t for t in dataset["text"] if len(t.strip()) > 20]
 
     tokeniser = AutoTokenizer.from_pretrained(tokeniser_name)
     tokeniser.pad_token = tokeniser.eos_token

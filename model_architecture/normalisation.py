@@ -32,8 +32,8 @@ Custom forward and backpropagation for normalisation class
 class NumpyNormalisation(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, gamma, beta, epsilon):
-        mean = x.mean(dim=1, keepdim=True)
-        var = x.var(dim=1, keepdim=True, unbiased=False)
+        mean = x.mean(dim=-1, keepdim=True)
+        var = x.var(dim=-1, keepdim=True, unbiased=False)
 
         std = torch.sqrt(var + epsilon)
         xhat = (x - mean) / std
