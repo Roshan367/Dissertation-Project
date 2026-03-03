@@ -7,14 +7,14 @@ from transformers import AutoTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-d_model = 128
-num_heads = 8
+d_model = 256
+num_heads = 16
 num_layers = 6
-d_ff = 1024
-max_seq_length = 256
+d_ff = 2048
+max_seq_length = 512
 dropout = 0.1
 
-num_epochs = 10
+num_epochs = 50
 lr = 3e-4
 
 tokeniser = AutoTokenizer.from_pretrained("gpt2")
@@ -23,7 +23,7 @@ tokeniser.pad_token = tokeniser.eos_token
 
 loader, tokeniser = get_wikitext_dataloader(
     # Only training on 1000 values
-    split="train",
+    split="train[:200]",
     tokeniser_name="gpt2",
     batch_size=64,
     max_length=max_seq_length,
@@ -95,7 +95,7 @@ model.eval()
 with torch.no_grad():
     prompt = "Aircrafts are "
     input_ids = tokeniser(prompt, return_tensors="pt")["input_ids"].to(device)
-    generated = input_ids[:, :1]
+    generated = input_ids
 
     p = 0.9
     for _ in range(50):  # generate 50 tokens
