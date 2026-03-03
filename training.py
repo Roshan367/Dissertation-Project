@@ -9,11 +9,11 @@ from transformers import AutoTokenizer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
-d_model = 512
+d_model = 128
 num_heads = 16
 num_layers = 8
 d_ff = 2048
-max_seq_length = 512
+max_seq_length = 128
 dropout = 0.1
 num_epochs = 10
 lr = 3e-4
@@ -42,14 +42,27 @@ model = Transformer(
 )
 model.to(device)
 
+
+def lr_lambda(step):
+    warmup_steps = 4000
+    if step < warmup_steps:
+        return step / warmup_steps
+    progress = (step - warmup_steps) / (total_steps - warmup_steps)
+    return 0.5 * (1 + math.cos(math.pi * progress))
+
+
+total_steps = num_epochs * len(loader)
+
 criterion = nn.CrossEntropyLoss(ignore_index=tokeniser.pad_token_id)
 
 # Fixed betas for standard Adam — (0.9, 0.98) is for warmup schedulers only
 optimiser = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-9)
 
-scheduler = torch.optim.lr_scheduler.OneCycleLR(
-    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
-)
+# scheduler = torch.optim.lr_scheduler.OneCycleLR(
+#    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
+# )
+
+scheduler = torch.optim.lr_scheduler.LambdaLR(optimiser, lr_lambda)
 
 scaler = torch.amp.GradScaler("cuda")
 
