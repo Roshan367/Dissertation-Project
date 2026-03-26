@@ -9,11 +9,11 @@ from transformers import AutoTokenizer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
-d_model = 128
-num_heads = 16
+d_model = 512
+num_heads = 8
 num_layers = 8
 d_ff = 2048
-max_seq_length = 128
+max_seq_length = 512
 dropout = 0.1
 num_epochs = 10
 lr = 3e-4
@@ -100,40 +100,6 @@ for epoch in range(num_epochs):
         batches += 1
 
     avg_loss = total_loss / max(1, batches)
-    perplexity = math.exp(avg_loss)  # Fixed: was torch.exp() on a float
+    perplexity = math.exp(avg_loss)
     print(f"Epoch: {epoch + 1}, Loss: {avg_loss:.4f}, Perplexity: {perplexity:.2f}")
-
-
-# ── Inference ─────────────────────────────────────────────────────────────────
-model.eval()
-with torch.no_grad():
-    prompt = "Aircrafts are "
-    input_ids = tokeniser(prompt, return_tensors="pt")["input_ids"].to(device)
-    generated = input_ids
-    p = 0.9
-
-    for _ in range(50):
-        # Fixed: feed full growing context every step, not just last token
-        output = model(generated)  # (1, T, vocab_size)
-        probs = torch.softmax(output[:, -1, :], dim=-1)
-
-        # Top-p (nucleus) sampling
-        sorted_probs, sorted_indices = torch.sort(probs, descending=True)
-        cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-        mask = cumulative_probs <= p
-        mask[:, 0] = True  # always keep top token
-        sorted_probs = sorted_probs * mask
-        sorted_probs = sorted_probs / sorted_probs.sum(dim=-1, keepdim=True).clamp(
-            min=1e-8
-        )
-
-        sampled_index = torch.multinomial(sorted_probs, num_samples=1)
-        next_token = sorted_indices.gather(-1, sampled_index)
-        generated = torch.cat((generated, next_token), dim=1)
-
-        # Stop at EOS
-        if next_token.item() == tokeniser.eos_token_id:
-            break
-
-generated_text = tokeniser.decode(generated[0], skip_special_tokens=True)
-print("Generated text:", generated_text)
+    torch.save(model.save_dict(), "models/transformer_model.pth")
