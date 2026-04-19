@@ -20,26 +20,26 @@ dropout = 0.1
 num_epochs = 5
 lr = 3e-4
 
-tokeniser = AutoTokenizer.from_pretrained("gpt2")
-tokeniser.pad_token = tokeniser.eos_token
+with accelerator.main_process_first():
+    tokeniser = AutoTokenizer.from_pretrained("gpt2")
+    tokeniser.pad_token = tokeniser.eos_token
 
-loader, tokeniser = get_wikitext_dataloader(
-    split="train",
-    tokeniser_name="gpt2",
-    batch_size=64,
-    max_length=max_seq_length,
-)
-val_loader, _ = get_wikitext_dataloader(
-    split="validation",
-    tokeniser_name="gpt2",
-    batch_size=64,
-    max_length=max_seq_length,
-)
-val_loader = accelerator.prepare(val_loader)
+    loader, tokeniser = get_wikitext_dataloader(
+        split="train",
+        tokeniser_name="gpt2",
+        batch_size=64,
+        max_length=max_seq_length,
+    )
+
+    val_loader, _ = get_wikitext_dataloader(
+        split="validation",
+        tokeniser_name="gpt2",
+        batch_size=64,
+        max_length=max_seq_length,
+    )
 
 vocab_size = tokeniser.vocab_size
 
-# Decoder-only model — no src/tgt vocab split needed
 model = Transformer(
     vocab_size=vocab_size,
     d_model=d_model,
@@ -60,22 +60,14 @@ def lr_lambda(step):
 
 
 total_steps = num_epochs * len(loader)
-
 criterion = nn.CrossEntropyLoss(ignore_index=tokeniser.pad_token_id)
-
-# Fixed betas for standard Adam — (0.9, 0.98) is for warmup schedulers only
 optimiser = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-9)
-
-# scheduler = torch.optim.lr_scheduler.OneCycleLR(
-#    optimiser, max_lr=lr, epochs=num_epochs, steps_per_epoch=len(loader)
-# )
-
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimiser, lr_lambda)
 
-# scaler = torch.amp.GradScaler("cuda")
 model, optimiser, loader, scheduler = accelerator.prepare(
     model, optimiser, loader, scheduler
 )
+val_loader = accelerator.prepare(val_loader)
 
 best_val_loss = float("inf")
 model.train()

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=03:00:00
+#SBATCH --time=05:00:00
 #SBATCH --partition=gpu-h100
 #SBATCH --qos=gpu
 #SBATCH --gres=gpu:2
@@ -9,7 +9,7 @@
 #SBATCH --mail-user=rvirdee1@sheffield.ac.uk
 #SBATCH --output=output.%j.out
 
-module load Python/3.11.3-GCCoew-12.3.0
+module load Python/3.11.3-GCCcore-12.3.0
 module load cuDNN/8.9.2.26-CUDA-12.1.1
 source $VENV_HOME/dissvenv/bin/activate
 
