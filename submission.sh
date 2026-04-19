@@ -18,8 +18,8 @@ python -c "import torch; print('CUDA available:', torch.cuda.is_available()); pr
 
 echo ""
 echo "--- Library Import Check ---"
-python -c "import torch; import datasets; import transformers; print('All imports OK')"
+python -c "import torch; import datasets; import transformers; import accelerate; print('All imports OK')"
 
 echo ""
 echo "=== Starting Main Job ==="
-python training.py
+accelerate launch --num_processes=2 training.py
