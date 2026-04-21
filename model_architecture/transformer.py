@@ -22,6 +22,7 @@ class Transformer(nn.Module):
         dropout,
     ):
         super(Transformer, self).__init__()
+        # Initialise embedding and decoder layers
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.positional_encoding = encoding.PositionalEncoding(d_model, max_seq_length)
         self.decode_layers = nn.ModuleList(
@@ -33,21 +34,23 @@ class Transformer(nn.Module):
         self.fc = nn.Linear(d_model, vocab_size)
         self.dropout = nn.Dropout(dropout)
 
+    # Mask generation for decoder
     def generate_mask(self, x):
         device = x.device
         seq_length = x.size(1)
-        # Padding mask: (B, 1, 1, T)
+        # Padding mask (B, 1, 1, T)
         pad_mask = (x != 0).unsqueeze(1).unsqueeze(2)
-        # Causal mask: (1, T, T) — prevents attending to future tokens
+        # Causal mask (1, T, T) prevents attending to future tokens
         causal_mask = (
             1
             - torch.triu(
                 torch.ones(1, seq_length, seq_length, device=device), diagonal=1
             )
         ).bool()
-        # Combine: (B, 1, T, T)
+        # Combine (B, 1, T, T)
         return pad_mask & causal_mask
 
+    # Forward pass for transformer
     def forward(self, x):
         mask = self.generate_mask(x)
         x = self.dropout(self.positional_encoding(self.embedding(x)))
