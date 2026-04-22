@@ -15,24 +15,31 @@ model = Transformer()
 model.load_save_dict(torch.load("models/transformer_model.pth"))
 
 
-# ── Inference ─────────────────────────────────────────────────────────────────
+# Inference
 model.eval()
 with torch.no_grad():
     prompt = "Aircrafts are "
     input_ids = tokeniser(prompt, return_tensors="pt")["input_ids"].to(device)
     generated = input_ids
     p = 0.9
+    temperature = 1.0
 
     for _ in range(50):
-        # Fixed: feed full growing context every step, not just last token
-        output = model(generated)  # (1, T, vocab_size)
-        probs = torch.softmax(output[:, -1, :], dim=-1)
+        output = model(generated)
+        logits = output[:, -1, :]
+        if temperature != 1.0:
+            logits = logits / max(temperature, 1e-8)
+        
+        probs = torch.softmax(logits, dim=-1)
 
         # Top-p (nucleus) sampling
         sorted_probs, sorted_indices = torch.sort(probs, descending=True)
         cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-        mask = cumulative_probs <= p
-        mask[:, 0] = True  # always keep top token
+        # Applies right shift so token that first exceeds is still included
+        shifted = torch.roll(cumulative_probs, 1, dims=-1)
+        shifted[:, 0] = 0.0
+        mask = shifted < p
+        
         sorted_probs = sorted_probs * mask
         sorted_probs = sorted_probs / sorted_probs.sum(dim=-1, keepdim=True).clamp(
             min=1e-8
