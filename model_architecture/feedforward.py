@@ -24,6 +24,7 @@ class FeedForward(nn.Module):
         nn.init.kaiming_uniform_(self.W1, nonlinearity="relu")
         nn.init.kaiming_uniform_(self.W2, nonlinearity="relu")
 
+    # Forward pass for FFN
     def forward(self, x):
         return CustomFeedForward.apply(x, self.W1, self.b1, self.W2, self.b2)
 

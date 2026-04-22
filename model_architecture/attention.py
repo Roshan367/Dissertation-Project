@@ -34,12 +34,15 @@ class MultiHeadAttention(nn.Module):
         batch_size, _, seq_length, d_k = x.size()
         return x.transpose(1, 2).contiguous().view(batch_size, seq_length, self.d_model)
 
+    # Forward pass for attention
     def forward(self, Q, K, V, mask=None):
         Q = self.split_heads(self.W_q(Q))
         K = self.split_heads(self.W_k(K))
         V = self.split_heads(self.W_v(V))
 
+        # Performs custom attention
         attention_output = CustomScaledDotAttention.apply(Q, K, V, mask, self.d_k)
+        # Combines the attention heads
         output = self.W_o(self.combine_heads(attention_output))
         return output
 
@@ -53,15 +56,17 @@ class CustomScaledDotAttention(torch.autograd.Function):
     @staticmethod
     def forward(ctx, Q, K, V, mask, d_k):
         scale = 1.0 / math.sqrt(d_k)
-
+        # Calculates the similarity
         attention_scores = torch.matmul(Q, K.transpose(-2, -1)) * scale
-
+        # Removes extremely large attention scores for numerical stability
         max_scores = attention_scores.max(dim=-1, keepdim=True).values
         attention_scores = attention_scores - max_scores
 
+        # Apply mask
         if mask is not None:
             attention_scores = attention_scores.masked_fill(~mask.bool(), float("-inf"))
 
+        # Softmax
         exp_scores = torch.exp(attention_scores)
         P = exp_scores / exp_scores.sum(dim=-1, keepdim=True)
 
@@ -94,6 +99,7 @@ class CustomScaledDotAttention(torch.autograd.Function):
 
         dS = dS * scale
 
+        #Apply mask
         if mask is not None:
             dS = dS.masked_fill(mask == 0, 0.0)
 
