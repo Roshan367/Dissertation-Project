@@ -5,15 +5,13 @@ models/
 *.bin
 *.safetensors
 
-# HuggingFace saved models
-hf_gpt2_best/
-
 # Python cache
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 .Python
+*.pyc
 
 # Virtual environment
 .venv/
@@ -24,24 +22,19 @@ dissvenv/
 # Jupyter notebooks checkpoints
 .ipynb_checkpoints/
 
-# Evaluation results (optional — include if you want results tracked)
-eval_results.json
-hf_eval_results.json
-
-# Dataset cache
-data/cache/
-~/.cache/huggingface/
-
-# SLURM logs (optional — include if you don't want logs tracked)
+# SLURM output and submission scripts
+output.*.out
 slurm-*.out
 slurm-*.err
+*.sh
+
+# Evaluation results
+eval_results.json
+hf_eval_results.json
 
 # OS files
 .DS_Store
 Thumbs.db
-
-# Accelerate config
-~/.cache/huggingface/accelerate/
 
 # Temp files
 *.tmp
