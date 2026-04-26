@@ -1,0 +1,48 @@
+# Model checkpoints and saved weights
+models/
+*.pth
+*.pt
+*.bin
+*.safetensors
+
+# HuggingFace saved models
+hf_gpt2_best/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+.venv/
+venv/
+env/
+dissvenv/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Evaluation results (optional — include if you want results tracked)
+eval_results.json
+hf_eval_results.json
+
+# Dataset cache
+data/cache/
+~/.cache/huggingface/
+
+# SLURM logs (optional — include if you don't want logs tracked)
+slurm-*.out
+slurm-*.err
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Accelerate config
+~/.cache/huggingface/accelerate/
+
+# Temp files
+*.tmp
+*.log
