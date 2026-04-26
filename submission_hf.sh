@@ -23,4 +23,5 @@ python -c "import torch; import datasets; import transformers; import accelerate
 echo ""
 echo "=== Starting Main Job ==="
 
-accelerate launch training.py
+accelerate launch hf_training.py
+

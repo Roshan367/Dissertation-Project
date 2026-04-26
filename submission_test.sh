@@ -11,6 +11,7 @@
 
 module load Python/3.11.3-GCCcore-12.3.0
 module load cuDNN/8.9.2.26-CUDA-12.1.1
+module load OpenBLAS/0.3.23-GCC-12.3.0
 source $VENV_HOME/dissvenv/bin/activate
 
 echo "--- PyTorch GPU Check ---"
@@ -23,4 +24,4 @@ python -c "import torch; import datasets; import transformers; import accelerate
 echo ""
 echo "=== Starting Main Job ==="
 
-accelerate launch training.py
+accelerate launch run_evals.py

@@ -1,0 +1,34 @@
+--- PyTorch GPU Check ---
+CUDA available: True
+Number of GPUs: 1
+Device 0: NVIDIA H100 NVL
+Device 1: N/A
+
+--- Library Import Check ---
+All imports OK
+
+=== Starting Main Job ===
+The following values were not passed to `accelerate launch` and had defaults used instead:
+	`--num_processes` was set to a value of `1`
+	`--num_machines` was set to a value of `1`
+	`--mixed_precision` was set to a value of `'no'`
+	`--dynamo_backend` was set to a value of `'no'`
+To avoid this warning pass in values for each of the problematic parameters or run `accelerate config`.
+[RANK 0] Detected kernel version 3.10.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Layer norm weights (should be 1.0 if random init): tensor([1., 1., 1., 1., 1.], grad_fn=<SliceBackward0>)
+Epoch 1 - Train PPL: 97.06 | Val PPL: 40.33
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.81it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.81it/s]
+New best model saved (Val Loss: 3.6972)
+Epoch 2 - Train PPL: 39.29 | Val PPL: 32.44
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.67it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.67it/s]
+New best model saved (Val Loss: 3.4793)
+Epoch 3 - Train PPL: 32.42 | Val PPL: 28.96
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.73it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.73it/s]
+New best model saved (Val Loss: 3.3659)
+Epoch 4 - Train PPL: 28.74 | Val PPL: 27.11
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.54it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.54it/s]
+New best model saved (Val Loss: 3.2999)
+Epoch 5 - Train PPL: 26.85 | Val PPL: 26.95
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.53it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.53it/s]
+New best model saved (Val Loss: 3.2939)

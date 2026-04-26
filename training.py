@@ -120,14 +120,13 @@ for epoch in range(num_epochs):
     avg_loss = total_loss / max(1, batches)
     perplexity = math.exp(avg_loss)
 
-    if accelerator.is_main_process:
-        print(
-            f"Epoch {epoch + 1} — Train PPL: {perplexity:.2f} | Val PPL: {val_perplexity:.2f}"
+    print(
+        f"Epoch {epoch + 1} — Train PPL: {perplexity:.2f} | Val PPL: {val_perplexity:.2f}"
+    )
+    if avg_val_loss < best_val_loss:
+        best_val_loss = avg_val_loss
+        torch.save(
+            accelerator.unwrap_model(model).state_dict(),
+            "models/transformer_best.pth",
         )
-        if avg_val_loss < best_val_loss:
-            best_val_loss = avg_val_loss
-            torch.save(
-                accelerator.unwrap_model(model).state_dict(),
-                "models/transformer_best.pth",
-            )
-            print(f"New best model saved (Val Loss: {avg_val_loss:.4f})")
+        print(f"New best model saved (Val Loss: {avg_val_loss:.4f})")

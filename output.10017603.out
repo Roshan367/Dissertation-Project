@@ -1,25 +1,28 @@
 --- PyTorch GPU Check ---
 CUDA available: True
-Number of GPUs: 2
-Device 0: NVIDIA H100 PCIe
-Device 1: NVIDIA H100 PCIe
+Number of GPUs: 1
+Device 0: NVIDIA H100 NVL
+Device 1: N/A
 
 --- Library Import Check ---
 All imports OK
 
 === Starting Main Job ===
 The following values were not passed to `accelerate launch` and had defaults used instead:
-		More than one GPU was found, enabling multi-GPU training.
-		If this was unintended please pass in `--num_processes=1`.
+	`--num_processes` was set to a value of `1`
 	`--num_machines` was set to a value of `1`
 	`--mixed_precision` was set to a value of `'no'`
 	`--dynamo_backend` was set to a value of `'no'`
 To avoid this warning pass in values for each of the problematic parameters or run `accelerate config`.
 [RANK 0] Detected kernel version 3.10.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Epoch 1 — Train PPL: 172.48 | Val PPL: 66.75
-New best model saved (Val Loss: 4.2010)
-Epoch 2 — Train PPL: 61.46 | Val PPL: 46.38
-New best model saved (Val Loss: 3.8369)
-slurmstepd: error: *** JOB 10005579 ON gpu26 CANCELLED AT 2026-04-20T01:08:09 DUE TO TIME LIMIT ***
+Epoch 1 — Train PPL: 148.92 | Val PPL: 59.80
+New best model saved (Val Loss: 4.0909)
+Epoch 2 — Train PPL: 57.35 | Val PPL: 44.06
+New best model saved (Val Loss: 3.7856)
+Epoch 3 — Train PPL: 44.88 | Val PPL: 37.50
+New best model saved (Val Loss: 3.6243)
+Epoch 4 — Train PPL: 38.76 | Val PPL: 34.67
+New best model saved (Val Loss: 3.5460)
+Epoch 5 — Train PPL: 35.91 | Val PPL: 34.18
+New best model saved (Val Loss: 3.5317)
