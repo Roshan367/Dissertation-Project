@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
 import math
@@ -73,8 +72,8 @@ with torch.no_grad():
         start = time.perf_counter()
 
         for _ in range(50):
-            output = model(generated)          # ? plain tensor in, plain tensor out
-            logits = output[:, -1, :]          # ? index directly, no .logits
+            output = model(generated)          
+            logits = output[:, -1, :]          
 
             if temperature != 1.0:
                 logits = logits / max(temperature, 1e-8)

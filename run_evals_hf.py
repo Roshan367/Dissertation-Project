@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import torch
 import lm_eval
 import json
@@ -11,17 +10,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 tokenizer.pad_token = tokenizer.eos_token
 
-# Load your saved HF model
 model = GPT2LMHeadModel.from_pretrained("models/hf_gpt2_best")
 model.to(device)
 model.eval()
 
-# Wrapper subclass — overrides only _model_call to handle HF output format
 class HFTransformerEvalWrapper(TransformerEvalWrapper):
     def _model_call(self, inps):
         with torch.no_grad():
             output = self.model(input_ids=inps)
-            return output.logits  # (batch, seq, vocab) — same shape as your custom model
+            return output.logits  
 
 wrapped = HFTransformerEvalWrapper(model, tokenizer, device)
 

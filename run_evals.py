@@ -1,4 +1,3 @@
-# run_evals.py
 import torch
 import lm_eval
 from transformers import AutoTokenizer
@@ -40,7 +39,7 @@ wrapped = TransformerEvalWrapper(model, tokeniser, device)
 results = lm_eval.simple_evaluate(
     model=wrapped,
     tasks=["winogrande", "lambada_openai", "blimp", "hellaswag", "piqa"],
-    num_fewshot=0,       # zero-shot; set to e.g. 5 for few-shot
+    num_fewshot=0,       
     batch_size=1,
     device=str(device),
 )

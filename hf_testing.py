@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
 import math
@@ -31,7 +30,6 @@ with torch.no_grad():
     for batch in test_loader:
         ids = batch["tgt"].to(device)
 
-        # ? HF model takes input shifted — pass full sequence, use labels for loss
         outputs = model(input_ids=ids[:, :-1])
         logits = outputs.logits.contiguous().view(-1, tokeniser.vocab_size)
         targets = ids[:, 1:].contiguous().view(-1)
@@ -66,7 +64,6 @@ with torch.no_grad():
         start = time.perf_counter()
 
         for _ in range(50):
-            # ? HF model returns an object, extract logits
             output = model(input_ids=generated)
             logits = output.logits[:, -1, :]
 

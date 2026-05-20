@@ -9,7 +9,6 @@ from transformers import GPT2Config, GPT2LMHeadModel
 
 accelerator = Accelerator()
 
-# Hyperparameters - matching custom model exactly
 d_model = 512
 num_heads = 8
 num_layers = 8
