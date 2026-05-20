@@ -19,11 +19,15 @@ class Decoder(nn.Module):
         self.norm2 = normalisation.HybridLayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
 
+    """
+    Forward paass for the decoder which acts as the residual layer
+    """
     def forward(self, x, mask):
-        # Causal self-attention
-        attention_output = self.self_attention(x, x, x, mask)
-        x = self.norm1(x + self.dropout(attention_output))
-        # Feedforward
-        ff_output = self.feedforward(x)
-        x = self.norm2(x + self.dropout(ff_output))
+        # Causal self-attention (Pre-LN)
+        normed_x = self.norm1(x)
+        attention_output = self.self_attention(normed_x, normed_x, normed_x, mask)
+        x = x + self.dropout(attention_output)
+        # Feedforward (Pre-LN)
+        ff_output = self.feedforward(self.norm2(x))
+        x = x + self.dropout(ff_output)
         return x

@@ -48,11 +48,15 @@ class MultiHeadAttention(nn.Module):
 
 
 """
-Custom attention class to perform custom forward and backpropagation
+Custom scaled dot-product attention with manual forward and backward passes
+Implements the attention mechanism from scratch using torch.autograd
 """
-
-
 class CustomScaledDotAttention(torch.autograd.Function):
+    """
+    Forward pass for scaled dot-product attention
+    Computes attention weights and applies them to the value matrix
+    Includes numerical stability via max score subtraction and causal masking
+    """
     @staticmethod
     def forward(ctx, Q, K, V, mask, d_k):
         scale = 1.0 / math.sqrt(d_k)
@@ -74,9 +78,14 @@ class CustomScaledDotAttention(torch.autograd.Function):
 
         ctx.save_for_backward(Q, K, V, P, mask, attention_scores)
         ctx.d_k = d_k
-
         return O
+        
 
+    """
+    Manual backward pass for scaled dot-product attention
+    Computes gradients for Q, K, and V using the chain rule
+    returning None for mask and d_k as they are not learnable parameters
+    """
     @staticmethod
     def backward(ctx, dO):
         Q, K, V, P, mask, attention_scores = ctx.saved_tensors

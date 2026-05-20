@@ -1,8 +1,14 @@
-# -*- coding: utf-8 -*-
 import torch
 import torch.nn.functional as F
 from lm_eval.api.model import LM
 
+
+"""
+Wrapper class to interface the custom transformer model with the
+Language Model Evaluation Harness (lm-eval) framework
+Implements the required LM API methods to enable standardised
+evaluation across benchmarks such as BLiMP, HellaSwag, and WinoGrande
+"""
 class TransformerEvalWrapper(LM):
     def __init__(self, model, tokenizer, device, batch_size=1):
         super().__init__()
@@ -50,16 +56,24 @@ class TransformerEvalWrapper(LM):
         with torch.no_grad():
             return self.model(inps)
 
+    """
+    Computes the log likelihood of a continuation given a context for
+    each request
+    Tokenises the context and continuation, constructs
+    the full input sequence, and extracts the logits corresponding to
+    the continuation tokens
+    Returns the total log probability of the
+    continuation and a greedy flag indicating whether the model would
+    have predicted the continuation greedily
+    """
     def loglikelihood(self, requests):
         results = []
         for req in requests:
             context, continuation = req.args
             ctx_ids = self.tok_encode(context)
             cont_ids = self.tok_encode(continuation)
-            # Handle empty context — prepend EOS as a dummy token
             if len(ctx_ids) == 0:
                 ctx_ids = [self.eot_token_id]
-            # Truncate context if combined length exceeds max
             if len(ctx_ids) + len(cont_ids) > self.max_length:
                 ctx_ids = ctx_ids[-(self.max_length - len(cont_ids)):]
 
@@ -73,14 +87,13 @@ class TransformerEvalWrapper(LM):
                 f"Sequence length {input_ids.size(1)} exceeds max_seq_length {self.max_length}"
 
             with torch.no_grad():
-                logits = self._model_call(input_ids)  # (1, seq, vocab)
+                logits = self._model_call(input_ids)  
 
             cont_len = len(cont_ids)
             ctx_len = len(ctx_ids)
 
-            # logits[i] predicts token[i+1], so slice accordingly
-            cont_logits = logits[0, ctx_len - 1 : ctx_len + cont_len - 1, :]  # (cont_len, vocab)
-            cont_targets = input_ids[0, ctx_len : ctx_len + cont_len]          # (cont_len,)
+            cont_logits = logits[0, ctx_len - 1 : ctx_len + cont_len - 1, :]  
+            cont_targets = input_ids[0, ctx_len : ctx_len + cont_len]         
 
             assert cont_logits.shape[0] == cont_len, \
                 f"Logit slice mismatch: {cont_logits.shape[0]} != {cont_len}"
@@ -93,6 +106,17 @@ class TransformerEvalWrapper(LM):
             is_greedy = (cont_logits.argmax(dim=-1) == cont_targets).all().item()
             results.append((total_log_prob, is_greedy))
         return results
+        
+        
+    """
+    Computes the rolling log likelihood over an entire text sequence
+    for each request
+    Tokenises the full text, runs a single forward
+    pass, and computes the log probability of each token given all
+    preceding tokens
+    Returns the total log probability summed across
+    all tokens in the sequence.
+    """
 
     def loglikelihood_rolling(self, requests):
         results = []
@@ -100,7 +124,6 @@ class TransformerEvalWrapper(LM):
             (text,) = req.args
             token_ids = self.tok_encode(text)
 
-            # Truncate to max_length if needed
             if len(token_ids) > self.max_length:
                 token_ids = token_ids[-self.max_length:]
 
@@ -122,5 +145,4 @@ class TransformerEvalWrapper(LM):
         return results
 
     def generate_until(self, requests):
-        """Not needed for LAMBADA, BLiMP, or HellaSwag"""
         raise NotImplementedError

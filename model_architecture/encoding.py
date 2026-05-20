@@ -6,11 +6,16 @@ import math
 import copy
 
 """
-Positional encoding class for the decoder
+Sinusoidal positional encoding for the decoder-only transformer
+Injects sequence position information into token embeddings using
+fixed sine and cosine functions of varying frequencies
 """
-
-
 class PositionalEncoding(nn.Module):
+    """
+    Precomputes the sinusoidal positional encoding matrix of shape
+    (1, max_seq_length, d_model) and registers it as a buffer so
+    it is not treated as a learnable parameter
+    """
     def __init__(self, d_model, max_seq_length):
         super(PositionalEncoding, self).__init__()
 
@@ -25,5 +30,9 @@ class PositionalEncoding(nn.Module):
 
         self.register_buffer("pe", pe.unsqueeze(0))
 
+    """
+    Adds the precomputed positional encoding to the input tensor
+    Slices the encoding to match the input sequence length
+    """
     def forward(self, x):
         return x + self.pe[:, : x.size(1)]

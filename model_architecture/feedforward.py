@@ -7,13 +7,16 @@ import copy
 import numpy as np
 
 """
-Feedforward class to be used in the decoder
-
-A feedforward neural network for the inputs
+Feed-forward neural network for the transformer decoder block
+Consists of two linear projections with a ReLU activation in between,
+expanding the input from d_model to d_ff then projecting back to d_model
+Weights are initialised using Kaiming uniform initialisation suitable for ReLU
+Delegates forward and backward computation to CustomFeedForward
 """
-
-
 class FeedForward(nn.Module):
+    """
+    Initialises the weight matrices and biases for both linear projections
+    """
     def __init__(self, d_model, d_ff):
         super(FeedForward, self).__init__()
         self.W1 = nn.Parameter(torch.empty(d_model, d_ff))
@@ -24,18 +27,22 @@ class FeedForward(nn.Module):
         nn.init.kaiming_uniform_(self.W1, nonlinearity="relu")
         nn.init.kaiming_uniform_(self.W2, nonlinearity="relu")
 
-    # Forward pass for FFN
+    """
+    Applies the custom feed-forward computation to the input tensor
+    """
     def forward(self, x):
         return CustomFeedForward.apply(x, self.W1, self.b1, self.W2, self.b2)
 
 
 """
-Custom forward and backpropagation for the feedforward neural
-network
+Custom feed-forward implementation with manual forward and backward passes
+Implements a two-layer network with ReLU activation using torch.autograd
 """
-
-
 class CustomFeedForward(torch.autograd.Function):
+    """
+    Forward pass for the feed-forward network.
+    Applies first linear projection, ReLU activation, then second linear projection
+    """
     @staticmethod
     def forward(ctx, x, W1, b1, W2, b2):
         z1 = torch.matmul(x, W1) + b1
@@ -52,9 +59,13 @@ class CustomFeedForward(torch.autograd.Function):
             b2,
         )
         ctx.z1 = z1
-
         return y
-
+        
+    """
+    Manual backward pass for the feed-forward network
+    Computes gradients for all parameters and input using the chain rule,
+    applying the ReLU derivative as a binary mask where z1 > 0.
+    """
     @staticmethod
     def backward(ctx, dY):
         x, W1, b1, a1, W2, b2 = ctx.saved_tensors
